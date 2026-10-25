@@ -1,0 +1,30 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix d:    <http://esprit.tn/dechets.owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://esprit.tn/shapes#> sh:declare
+  [ sh:prefix "d"    ; sh:namespace "http://esprit.tn/dechets.owl#"^^xsd:anyURI ] ,
+  [ sh:prefix "rdf"  ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] ,
+  [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] .
+
+d:LotShape a sh:NodeShape ;
+  sh:targetClass d:Lot ;
+  sh:property [ sh:path d:poidsKg ; sh:minCount 1 ; sh:maxCount 1 ; sh:minExclusive 0.0 ;
+      sh:message "Le poids doit être renseigné et strictement positif." ] ;
+  sh:property [ sh:path d:dateProduction ; sh:minCount 1 ; sh:maxCount 1 ;
+      sh:message "La date de production est obligatoire." ] ;
+  sh:property [ sh:path d:produitPar ; sh:minCount 1 ; sh:maxCount 1 ; sh:class d:Producteur ;
+      sh:message "Un lot doit avoir exactement un producteur." ] ;
+  sh:property [ sh:path d:contientDechet ; sh:minCount 1 ; sh:class d:Dechet ;
+      sh:message "Un lot doit contenir au moins un déchet." ] ;
+  sh:property [ sh:path d:traitePar ; sh:minCount 1 ; sh:class d:CentreTraitement ;
+      sh:message "Un lot doit être traité par un centre de traitement." ] ;
+  sh:sparql [ a sh:SPARQLConstraint ;
+      sh:message "Non conforme : un lot de déchets dangereux ne peut pas être traité par un centre non agréé." ;
+      sh:prefixes <http://esprit.tn/shapes#> ;
+      sh:select """SELECT $this ?value WHERE {
+          $this d:contientDechet ?dec ; d:traitePar ?value .
+          ?dec rdf:type/rdfs:subClassOf* d:DechetDangereux .
+          ?value d:estAgree false . }""" ] .

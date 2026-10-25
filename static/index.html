@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EcoTrace – Traçabilité sémantique des déchets</title>
+<style>
+:root{--bg:#f6f8f5;--card:#fff;--ink:#1d2b22;--mut:#5d6b62;--line:#dfe6df;--acc:#1f7a4d;--acc2:#e8f4ed;--warn:#b3261e;--warnbg:#fdecea;--code:#f0f3f0}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1a211d;--ink:#e6efe9;--mut:#9bab9f;--line:#2b362f;--acc:#4cc38a;--acc2:#1e2e25;--warn:#ff8a80;--warnbg:#3a1e1c;--code:#222b25}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0;color:var(--acc)}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;color:var(--mut);padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:var(--acc2);color:var(--acc);border-color:var(--acc)}
+main{max-width:1180px;margin:0 auto;padding:20px 24px 90px}
+section{display:none}section.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi b{display:block;font-size:26px;color:var(--acc)}.kpi span{color:var(--mut);font-size:13px}
+.kpi.bad b{color:var(--warn)}
+h2{font-size:16px;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+textarea{width:100%;min-height:150px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+button.p,button.s,button.d{font:inherit;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--acc)}
+button.p{background:var(--acc);color:#fff}button.s{background:none;color:var(--acc)}
+button.d{background:none;color:var(--warn);border-color:var(--warn)}
+button.sm{padding:3px 9px;font-size:13px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+tr:last-child td{border-bottom:0}
+.bar{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:14px}
+.bar i{display:block;height:12px;border-radius:6px;background:var(--acc)}
+.bar em{font-style:normal;color:var(--mut);min-width:90px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+.chip{background:var(--acc2);color:var(--acc);border:0;border-radius:99px;padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+pre{background:var(--code);padding:12px;border-radius:8px;overflow:auto;font-size:12.5px;margin:6px 0;white-space:pre-wrap}
+.tag{display:inline-block;border-radius:99px;padding:1px 9px;font-size:12px;background:var(--acc2);color:var(--acc);margin:0 4px 4px 0}
+.tag.w{background:var(--warnbg);color:var(--warn)}
+.ans{font-size:16px;margin:10px 0}
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.node{background:var(--acc2);border:1px solid var(--acc);border-radius:10px;padding:8px 12px;font-size:13px}
+.node small{display:block;color:var(--mut)}.node.bad{background:var(--warnbg);border-color:var(--warn)}
+.arrow{color:var(--mut)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);max-width:560px;width:92%}
+dialog::backdrop{background:#0006}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form label{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:3px}
+.form .full{grid-column:1/-1}
+.gn{cursor:pointer}.gn rect{fill:var(--acc2);stroke:var(--acc)}.gn.bad rect{fill:var(--warnbg);stroke:var(--warn)}
+.gn.dang rect{stroke-width:2}.gn text{fill:var(--ink);font-size:11px}.gh{fill:var(--mut);font-size:12px;font-weight:600}
+.ge{fill:none;stroke:var(--line);stroke-width:1.2}.ge.hl{stroke:var(--acc);stroke-width:2.2}.dim{opacity:.15}
+#last{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:6px 24px;font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--mut);max-height:70px;overflow:auto;white-space:pre-wrap}
+#toast{position:fixed;top:14px;right:14px;background:var(--acc);color:#fff;padding:9px 16px;border-radius:9px;display:none;z-index:9}
+#toast.err{background:var(--warn)}
+</style>
+</head>
+<body>
+<header>
+  <h1>♻ EcoTrace · Traçabilité sémantique des déchets</h1>
+  <nav id="nav">
+    <button data-t="dash" class="on">Tableau de bord</button>
+    <button data-t="lots">Lots</button>
+    <button data-t="graph">Graphe</button>
+    <button data-t="nlq">Poser une question</button>
+    <button data-t="sparql">Console SPARQL</button>
+  </nav>
+</header>
+<main>
+<section id="dash" class="on">
+  <div class="grid" id="kpis"></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="card"><h2>Poids traité par procédé (kg)</h2><div id="byProc"></div></div>
+    <div class="card"><h2>Poids produit par producteur (kg)</h2><div id="byProd"></div></div>
+  </div>
+  <div class="card" style="margin-top:12px"><h2>Validation SHACL (qualité des données)</h2>
+    <button class="p" id="runShacl">Valider la base</button><div id="shacl" style="margin-top:10px"></div></div>
+  <div class="card" style="margin-top:12px"><h2>Raisonnement (classes inférées)</h2>
+    <button class="p" id="runInf">Lancer le raisonneur</button><div id="inf" style="margin-top:10px"></div></div>
+</section>
+
+<section id="lots">
+  <div class="row">
+    <input id="fSearch" placeholder="Recherche (lot, producteur, déchet…)">
+    <select id="fProd"><option value="">Tous producteurs</option></select>
+    <select id="fCentre"><option value="">Tous centres</option></select>
+    <input id="fMin" type="number" min="0" placeholder="Poids min (kg)" style="width:140px">
+    <select id="fVal"><option value="">Valorisation : tous</option><option value="true">Valorisés</option><option value="false">Non valorisés</option></select>
+    <label><input type="checkbox" id="fDang"> dangereux</label>
+    <label><input type="checkbox" id="fNC"> non conformes</label>
+    <button class="s" id="fGo">Filtrer</button>
+    <button class="p" id="newLot" style="margin-left:auto">+ Nouveau lot</button>
+  </div>
+  <div class="tw"><table id="lotsT"></table></div>
+  <div class="card" id="traceBox" style="margin-top:14px;display:none"></div>
+</section>
+
+<section id="graph">
+  <div class="card"><h2>Graphe de traçabilité</h2>
+    <p style="color:var(--mut);margin:0 0 8px">Producteurs et transporteurs → lots → centres, procédés, matières secondaires. Cliquez sur un nœud pour isoler ses liens. En rouge : lots non conformes et centres non agréés.</p>
+    <div class="tw" style="padding:6px"><div id="gbox"></div></div></div>
+</section>
+
+<section id="nlq">
+  <div class="card">
+    <h2>Interrogez l'ontologie en français</h2>
+    <div class="row"><input id="q" style="flex:1;min-width:260px" placeholder="Ex. : lots de plus de 500 kg produits par PlastiPack">
+    <button class="p" id="ask">Interroger</button></div>
+    <div class="chips" id="ex"></div>
+    <div id="nlqOut"></div>
+  </div>
+</section>
+
+<section id="sparql">
+  <div class="card"><h2>Console SPARQL (lecture seule)</h2>
+    <textarea id="raw">PREFIX d: &lt;http://esprit.tn/dechets.owl#&gt;
+SELECT ?centre (COUNT(?lot) AS ?lots) (SUM(?poids) AS ?kg)
+WHERE { ?lot d:traitePar ?c ; d:poidsKg ?poids . ?c d:nom ?centre }
+GROUP BY ?centre ORDER BY DESC(?kg)</textarea>
+    <div class="row" style="margin-top:8px"><button class="p" id="runRaw">Exécuter</button></div>
+    <div id="rawOut"></div></div>
+</section>
+</main>
+
+<dialog id="dlg"><h2 id="dlgT">Nouveau lot</h2><form method="dialog" class="form" id="form">
+  <label>Producteur<select name="producteur" required></select></label>
+  <label>Déchet<select name="dechet" required></select></label>
+  <label>Transporteur<select name="transporteur" required></select></label>
+  <label>Centre de traitement<select name="centre" required></select></label>
+  <label>Procédé<select name="procede" required></select></label>
+  <label>Matière secondaire (option)<select name="matiere"><option value="">—</option></select></label>
+  <label>Poids (kg)<input name="poids" type="number" min="1" step="any" required></label>
+  <label>Date de production<input name="date" type="date" required></label>
+  <div class="full row" style="justify-content:flex-end;margin:6px 0 0"><button type="button" class="s" id="cancel">Annuler</button><button class="p" id="save" value="ok">Enregistrer</button></div>
+</form></dialog>
+
+<div id="last">Dernière requête SPARQL : —</div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = v => typeof v === "number" ? v.toLocaleString("fr-FR") : esc(v);
+let refs = {}, editing = null;
+
+async function api(path, opts = {}) {
+  const r = await fetch("/api" + path, {headers: {"Content-Type": "application/json"}, ...opts});
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Erreur " + r.status);
+  if (data.sparql) $("#last").textContent = "Dernière requête SPARQL :\n" + data.sparql.replace(/\s+/g, " ").slice(0, 600);
+  return data;
+}
+function toast(msg, err) { const t = $("#toast"); t.textContent = msg; t.className = err ? "err" : ""; t.style.display = "block"; setTimeout(() => t.style.display = "none", 2800); }
+const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message, true); } };
+
+// ---- navigation
+$("#nav").onclick = e => { const t = e.target.dataset.t; if (!t) return;
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b === e.target));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === t));
+  if (t === "dash") loadDash(); if (t === "lots") loadLots(); if (t === "graph") loadGraph(); };
+
+function table(cols, rows, actions) {
+  return "<thead><tr>" + cols.map(c => `<th>${esc(c)}</th>`).join("") + (actions ? "<th></th>" : "") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr>" + cols.map(c => `<td>${fmt(r[c])}</td>`).join("") + (actions ? `<td>${actions(r)}</td>` : "") + "</tr>").join("") + "</tbody>";
+}
+function bars(el, rows, key) {
+  const max = Math.max(...rows.map(r => r.total), 1);
+  el.innerHTML = rows.map(r => `<div class="bar"><em>${esc(r[key])}</em><i style="width:${Math.round(180 * r.total / max)}px"></i>${fmt(r.total)}</div>`).join("");
+}
+
+// ---- tableau de bord
+const loadDash = guard(async () => {
+  const s = await api("/stats");
+  const k = (v, l, bad) => `<div class="card kpi ${bad ? "bad" : ""}"><b>${fmt(v)}</b><span>${l}</span></div>`;
+  $("#kpis").innerHTML = k(s.lots, "lots tracés") + k(s.poids_total + " kg", "poids total") +
+    k(s.taux_valorisation + " %", "taux de valorisation") + k(s.lots_dangereux, "lots dangereux") +
+    k(s.lots_non_conformes, "lots non conformes", s.lots_non_conformes > 0);
+  bars($("#byProc"), s.poids_par_procede, "procede"); bars($("#byProd"), s.poids_par_producteur, "producteur");
+});
+$("#runInf").onclick = guard(async () => {
+  $("#inf").textContent = "Raisonnement en cours…";
+  const r = await api("/inference");
+  const row = (n, bad) => `<p><b>${n}</b> : ${(r[n] || []).map(x => `<span class="tag ${bad ? "w" : ""}">${esc(x)}</span>`).join("") || "—"}</p>`;
+  $("#inf").innerHTML = `<p style="color:var(--mut)">Moteur : ${esc(r.moteur)}</p>` + row("LotDangereux") + row("LotValorise") + row("LotNonConforme", true) + row("CentreNonAgree", true);
+});
+
+$("#runShacl").onclick = guard(async () => {
+  const r = await api("/validate");
+  $("#shacl").innerHTML = r.conforme ? '<span class="tag">Base conforme aux contraintes SHACL</span>' :
+    `<p style="color:var(--mut)">${r.violations.length} violation(s) détectée(s) :</p>` +
+    r.violations.map(v => `<p><span class="tag w">${esc(v.lot)}</span> ${esc(v.message)}</p>`).join("");
+});
+
+// ---- graphe
+const loadGraph = guard(async () => {
+  const g = await api("/graph"), NS = "http://www.w3.org/2000/svg";
+  const kinds = [["producteur", "Producteurs"], ["transporteur", "Transporteurs"], ["lot", "Lots"], ["centre", "Centres"], ["procede", "Procédés"], ["matiere", "Matières secondaires"]];
+  const W = 190, top = 34, cols = kinds.map(([k]) => g.nodes.filter(n => n.kind === k));
+  const maxN = Math.max(...cols.map(c => c.length)), H = top + maxN * 34 + 14, pos = {};
+  const el = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt !== undefined) e.textContent = txt; return e; };
+  const svg = el("svg", {viewBox: `0 0 ${W * 6} ${H}`}); svg.style.cssText = "width:100%;min-width:940px";
+  cols.forEach((col, i) => { svg.appendChild(el("text", {x: i * W + 10, y: 18, class: "gh"}, kinds[i][1]));
+    col.forEach((n, j) => { pos[n.id] = {x: i * W + 10, y: top + (j + .5) * (maxN * 34 / col.length) - 13}; }); });
+  const edgeEls = g.edges.map(([a, b]) => { const A = pos[a], B = pos[b], x1 = A.x + 150, y1 = A.y + 13, x2 = B.x, y2 = B.y + 13;
+    const e = el("path", {class: "ge", d: `M${x1},${y1} C${x1 + 30},${y1} ${x2 - 30},${y2} ${x2},${y2}`}); svg.appendChild(e); return {e, a, b}; });
+  const nodeEls = {};
+  g.nodes.forEach(n => { const p = pos[n.id], bad = n.non_conforme || n.non_agree;
+    const grp = el("g", {class: "gn" + (bad ? " bad" : "") + (n.dangereux ? " dang" : "")});
+    grp.appendChild(el("rect", {x: p.x, y: p.y, width: 150, height: 26, rx: 7}));
+    grp.appendChild(el("text", {x: p.x + 8, y: p.y + 17}, n.label.length > 22 ? n.label.slice(0, 21) + "…" : n.label));
+    grp.appendChild(el("title", {}, n.label + (n.dangereux ? " (dangereux)" : "") + (bad ? " – NON CONFORME" : "")));
+    grp.onclick = () => { const on = nodeEls.active !== n.id; nodeEls.active = on ? n.id : null;
+      const near = new Set([n.id]); edgeEls.forEach(x => { if (x.a === n.id || x.b === n.id) { near.add(x.a); near.add(x.b); } });
+      edgeEls.forEach(x => { x.e.classList.toggle("hl", on && (x.a === n.id || x.b === n.id)); x.e.classList.toggle("dim", on && !(x.a === n.id || x.b === n.id)); });
+      Object.entries(nodeEls).forEach(([id, ng]) => { if (id !== "active") ng.classList.toggle("dim", on && !near.has(id)); }); };
+    nodeEls[n.id] = grp; svg.appendChild(grp); });
+  $("#gbox").replaceChildren(svg);
+});
+
+// ---- lots
+function fillSelect(sel, items, first) {
+  sel.innerHTML = (first !== undefined ? `<option value="">${first}</option>` : "") + items.map(i => `<option value="${esc(i.id)}">${esc(i.nom)}</option>`).join("");
+}
+async function loadRefs() {
+  refs = await api("/refs");
+  fillSelect($("#fProd"), refs.producteurs, "Tous producteurs"); fillSelect($("#fCentre"), refs.centres, "Tous centres");
+  const f = $("#form");
+  fillSelect(f.producteur, refs.producteurs); fillSelect(f.dechet, refs.dechets); fillSelect(f.transporteur, refs.transporteurs);
+  fillSelect(f.centre, refs.centres); fillSelect(f.procede, refs.procedes); fillSelect(f.matiere, refs.matieres, "—");
+}
+const loadLots = guard(async () => {
+  const p = new URLSearchParams();
+  if ($("#fSearch").value) p.set("search", $("#fSearch").value);
+  if ($("#fProd").value) p.set("producteur", $("#fProd").value);
+  if ($("#fCentre").value) p.set("centre", $("#fCentre").value);
+  if ($("#fMin").value) p.set("min_poids", $("#fMin").value);
+  if ($("#fVal").value) p.set("valorise", $("#fVal").value);
+  if ($("#fDang").checked) p.set("dangereux", "true");
+  if ($("#fNC").checked) p.set("non_conforme", "true");
+  const r = await api("/lots?" + p);
+  const cols = ["nom", "poids", "date", "producteur", "dechet", "transporteur", "centre", "procede"];
+  $("#lotsT").innerHTML = table(cols, r.lignes, l => `<button class="s sm" data-a="trace" data-id="${esc(l.lot)}">Tracer</button> <button class="s sm" data-a="edit" data-id="${esc(l.lot)}">Modifier</button> <button class="d sm" data-a="del" data-id="${esc(l.lot)}">Supprimer</button>`)
+    || "";
+  if (!r.lignes.length) $("#lotsT").innerHTML = "<tbody><tr><td>Aucun lot.</td></tr></tbody>";
+});
+$("#fGo").onclick = loadLots;
+$("#fSearch").onkeydown = e => { if (e.key === "Enter") loadLots(); };
+
+$("#lotsT").onclick = guard(async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const id = b.dataset.id;
+  if (b.dataset.a === "trace") return trace(id);
+  if (b.dataset.a === "del") { if (!confirm("Supprimer " + id + " ?")) return; await api("/lots/" + id, {method: "DELETE"}); toast("Lot supprimé"); $("#traceBox").style.display = "none"; return loadLots(); }
+  if (b.dataset.a === "edit") { const l = (await api("/lots/" + id)).lot; openForm(l); }
+});
+
+async function trace(id) {
+  const l = (await api("/lots/" + id)).lot, bad = l.agree === false;
+  const n = (t, v, b) => `<div class="node ${b ? "bad" : ""}"><small>${t}</small>${esc(v)}</div>`;
+  const box = $("#traceBox"); box.style.display = "block";
+  box.innerHTML = `<h2>Traçabilité de ${esc(l.nom)} <span style="color:var(--mut);font-weight:400">· ${esc(l.bordereau)} · ${fmt(l.poids)} kg · ${esc(l.date)}</span></h2>
+  <div class="chain">${n("Producteur", l.producteur)}<span class="arrow">→</span>${n("Déchet", l.dechet)}<span class="arrow">→</span>${n("Transporteur", l.transporteur)}<span class="arrow">→</span>
+  ${n("Centre" + (bad ? " (NON AGRÉÉ)" : ""), l.centre, bad)}<span class="arrow">→</span>${n("Procédé", l.procede)}${l.matiere ? `<span class="arrow">→</span>${n("Matière secondaire", l.matiere)}` : ""}</div>`;
+  box.scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+
+const dlg = $("#dlg"), form = $("#form");
+function openForm(l) {
+  editing = l ? l.lot : null; $("#dlgT").textContent = l ? "Modifier " + l.nom : "Nouveau lot";
+  form.reset();
+  for (const n of ["producteur", "dechet", "transporteur", "centre", "procede", "matiere", "poids", "date"]) form[n].disabled = false;
+  if (l) { // seuls poids, centre, procédé, transporteur sont modifiables
+    const byName = (list, nom) => (list.find(x => x.nom === nom) || {}).id;
+    form.centre.value = byName(refs.centres, l.centre); form.procede.value = byName(refs.procedes, l.procede);
+    form.transporteur.value = byName(refs.transporteurs, l.transporteur); form.poids.value = l.poids;
+    for (const n of ["producteur", "dechet", "matiere", "date"]) form[n].disabled = true;
+    form.date.value = l.date; form.producteur.value = byName(refs.producteurs, l.producteur); form.dechet.value = byName(refs.dechets, l.dechet);
+  } else form.date.value = new Date().toISOString().slice(0, 10);
+  dlg.showModal();
+}
+$("#newLot").onclick = () => openForm(null);
+$("#cancel").onclick = () => dlg.close();
+form.onsubmit = guard(async e => {
+  e.preventDefault();
+  if (!form.reportValidity()) return;
+  const v = Object.fromEntries(new FormData(form)); v.poids = parseFloat(v.poids);
+  if (editing) { await api("/lots/" + editing, {method: "PUT", body: JSON.stringify({poids: v.poids, centre: v.centre, procede: v.procede, transporteur: v.transporteur})}); toast("Lot modifié"); }
+  else { if (!v.matiere) delete v.matiere; const r = await api("/lots", {method: "POST", body: JSON.stringify(v)}); toast("Lot créé : " + r.id); }
+  dlg.close(); await loadLots();
+});
+
+// ---- langage naturel
+const EXAMPLES = ["Quels sont les déchets dangereux ?", "Lots de plus de 500 kg produits par PlastiPack", "Combien de lots ont été recyclés ?",
+  "Qui transporte le lot L04 ?", "Quelle matière est produite à partir du plastique ?", "Poids total valorisé par procédé",
+  "Quels centres ne sont pas agréés ?", "Montre les lots non conformes", "Parcours du lot 7", "Lots produits à Sfax en septembre"];
+$("#ex").innerHTML = EXAMPLES.map(x => `<button class="chip">${esc(x)}</button>`).join("");
+$("#ex").onclick = e => { if (e.target.classList.contains("chip")) { $("#q").value = e.target.textContent; $("#ask").click(); } };
+$("#q").onkeydown = e => { if (e.key === "Enter") $("#ask").click(); };
+$("#ask").onclick = guard(async () => {
+  const r = await api("/nlq", {method: "POST", body: JSON.stringify({question: $("#q").value})});
+  const a = r.analyse, f = Object.entries(a.filtres || {}).map(([k, v]) => `<span class="tag">${esc(k)} = ${esc(JSON.stringify(v))}</span>`).join("");
+  const ents = (a.entites || []).map(x => `<span class="tag">${esc(x.kind)} : ${esc(x.label)}${x.match === "fuzzy" ? " ≈" : ""}</span>`).join("");
+  $("#nlqOut").innerHTML = `<div class="ans">${esc(r.reponse)}</div>
+   <p><span class="tag">intention : ${esc(a.intention)}</span><span class="tag">cible : ${esc(a.cible || "—")}</span>${ents}${f}</p>
+   <p style="color:var(--mut);font-size:12px">NLP : ${esc(r.modele_spacy)}</p>
+   ${r.sparql ? `<pre>${esc(r.sparql.trim())}</pre>` : ""}
+   ${r.lignes.length ? `<div class="tw"><table>${table(r.colonnes, r.lignes)}</table></div>` : ""}`;
+});
+
+// ---- console SPARQL
+$("#runRaw").onclick = guard(async () => {
+  const r = await api("/sparql", {method: "POST", body: JSON.stringify({query: $("#raw").value})});
+  $("#rawOut").innerHTML = "ask" in r ? `<p class="ans">${r.ask ? "Vrai" : "Faux"}</p>` : `<div class="tw" style="margin-top:10px"><table>${table(r.colonnes, r.lignes)}</table></div>`;
+});
+
+loadRefs().then(loadDash).catch(e => toast(e.message, true));
+</script>
+</body>
+</html>
